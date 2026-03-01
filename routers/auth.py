@@ -13,6 +13,8 @@ from schema.schemas import (
     LoginResponse,
     MeResponse,
     UserData,
+)
+from schema.response import (
     COMMON_ERROR_RESPONSES,
     BadRequestResponse,
     ConflictResponse,

@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = Field(default="HS256", description="JWT algorithm")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=1440, description="Token expiry in minutes")
 
+    # ==================== KLING AI CONFIGURATION ====================
+    KLING_ACCESS_KEY: str = Field(default="", description="Kling AI Access Key")
+    KLING_SECRET_KEY: str = Field(default="", description="Kling AI Secret Key")
+    KLING_API_BASE_URL: str = Field(default="https://api.klingai.com", description="Kling AI API base URL")
+
     # ==================== EXTERNAL SERVICES ====================
     FRONTEND_URL: str = Field(default="http://localhost:3000", description="Frontend URL")
 

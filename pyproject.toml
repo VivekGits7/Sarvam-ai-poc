@@ -1,7 +1,7 @@
 [project]
-name = "sarvam-ai-poc"
+name = "kling-ai-poc"
 version = "0.1.0"
-description = "Sarvam AI POC - FastAPI Backend"
+description = "Kling AI POC - FastAPI Backend"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -15,4 +15,6 @@ dependencies = [
     "slowapi>=0.1.9",
     "python-dotenv>=1.0.0",
     "python-multipart>=0.0.18",
+    "pyjwt>=2.9.0",
+    "httpx>=0.28.0",
 ]

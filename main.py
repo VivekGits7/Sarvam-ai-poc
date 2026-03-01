@@ -9,8 +9,8 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from config import settings
 from logger import setup_logging, get_logger
-from services.database import create_db_pool, close_db_pool
 from routers.auth import router as auth_router
+from routers.kling import router as kling_router
 from limiter import limiter
 from error import setup_error_handlers
 from middleware.request_logging import RequestLoggingMiddleware, SecurityHeadersMiddleware
@@ -27,20 +27,18 @@ logger = get_logger(__name__)
 async def lifespan(app: FastAPI):
     """Application lifecycle management."""
     # Startup
-    await create_db_pool()
-    logger.info("Database pool created")
+    logger.info("Application started")
 
     yield
 
     # Shutdown
-    await close_db_pool()
-    logger.info("Database pool closed")
+    logger.info("Application shutdown")
 
 
 # Create FastAPI application
 app = FastAPI(
-    title="Sarvam AI POC",
-    description="Sarvam AI POC API",
+    title="Kling AI POC",
+    description="Kling AI POC API",
     version="1.0.0",
     lifespan=lifespan,
     docs_url="/docs" if settings.ENVIRONMENT != "production" else None,
@@ -82,17 +80,18 @@ app.add_middleware(
 
 # Register routers
 app.include_router(auth_router)
+app.include_router(kling_router)
 
 
 # Health endpoints
 @app.get("/", tags=["Health"])
 async def root():
-    return {"message": "Welcome to Sarvam AI POC API", "version": "1.0.0"}
+    return {"message": "Welcome to Kling AI POC API", "version": "1.0.0"}
 
 
 @app.get("/health", tags=["Health"])
 async def health_check():
-    return {"status": "healthy", "service": "sarvam-ai-poc"}
+    return {"status": "healthy", "service": "kling-ai-poc"}
 
 
 # Run with uvicorn

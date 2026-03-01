@@ -1,258 +1,9 @@
+from enum import Enum
+
 from pydantic import BaseModel, Field, ConfigDict, EmailStr, field_validator
 from typing import Optional, List
 
-
-# ==================== BASE RESPONSE ====================
-
-
-class BaseResponse(BaseModel):
-    """Base response model used by all endpoints."""
-    success: bool = Field(default=True, description="Whether the request was successful")
-    message: str = Field(..., description="Human-readable response message", examples=["Operation successful"])
-
-
-# ==================== SWAGGER ERROR RESPONSE MODELS ====================
-
-
-class ErrorDetail(BaseModel):
-    """Individual validation error detail shown in 422 responses."""
-    field: str = Field(
-        ...,
-        description="Dot-separated path to the invalid field",
-        examples=["body.email"],
-    )
-    message: str = Field(
-        ...,
-        description="Human-readable validation error message",
-        examples=["value is not a valid email address"],
-    )
-    type: str = Field(
-        ...,
-        description="Machine-readable error type identifier",
-        examples=["value_error.email"],
-    )
-
-
-class ErrorBody(BaseModel):
-    """Structured error information returned in all error responses."""
-    status_code: int = Field(..., description="HTTP status code of the error", examples=[400])
-    status_message: str = Field(
-        ...,
-        description="HTTP status text (e.g., BAD REQUEST, NOT FOUND)",
-        examples=["BAD REQUEST"],
-    )
-    message: str = Field(
-        ...,
-        description="User-friendly error message",
-        examples=["Invalid request. Please check your input."],
-    )
-    code: Optional[str] = Field(
-        None,
-        description="Machine-readable error code for client-side handling",
-        examples=["BAD_REQUEST"],
-    )
-    details: Optional[List[ErrorDetail]] = Field(
-        None,
-        description="List of individual field validation errors (only for 422)",
-    )
-
-
-# ---- 400 Bad Request ----
-class BadRequestResponse(BaseModel):
-    """Returned when the request data is invalid or malformed."""
-    success: bool = Field(default=False, description="Always false for error responses")
-    error: ErrorBody = Field(..., description="Error details")
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "success": False,
-                "error": {
-                    "status_code": 400,
-                    "status_message": "BAD REQUEST",
-                    "message": "Invalid request. Please check your input.",
-                    "code": "BAD_REQUEST",
-                },
-            }
-        }
-    )
-
-
-# ---- 401 Unauthorized ----
-class UnauthorizedResponse(BaseModel):
-    """Returned when authentication is missing or token is invalid/expired."""
-    success: bool = Field(default=False, description="Always false for error responses")
-    error: ErrorBody = Field(..., description="Error details")
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "success": False,
-                "error": {
-                    "status_code": 401,
-                    "status_message": "UNAUTHORIZED",
-                    "message": "Please log in to continue.",
-                    "code": "UNAUTHORIZED",
-                },
-            }
-        }
-    )
-
-
-# ---- 403 Forbidden ----
-class ForbiddenResponse(BaseModel):
-    """Returned when the user does not have permission to access the resource."""
-    success: bool = Field(default=False, description="Always false for error responses")
-    error: ErrorBody = Field(..., description="Error details")
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "success": False,
-                "error": {
-                    "status_code": 403,
-                    "status_message": "FORBIDDEN",
-                    "message": "You don't have permission to access this resource.",
-                    "code": "FORBIDDEN",
-                },
-            }
-        }
-    )
-
-
-# ---- 404 Not Found ----
-class NotFoundResponse(BaseModel):
-    """Returned when the requested resource does not exist."""
-    success: bool = Field(default=False, description="Always false for error responses")
-    error: ErrorBody = Field(..., description="Error details")
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "success": False,
-                "error": {
-                    "status_code": 404,
-                    "status_message": "NOT FOUND",
-                    "message": "The requested resource was not found.",
-                    "code": "NOT_FOUND",
-                },
-            }
-        }
-    )
-
-
-# ---- 409 Conflict ----
-class ConflictResponse(BaseModel):
-    """Returned when the request conflicts with existing data (e.g., duplicate email)."""
-    success: bool = Field(default=False, description="Always false for error responses")
-    error: ErrorBody = Field(..., description="Error details")
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "success": False,
-                "error": {
-                    "status_code": 409,
-                    "status_message": "CONFLICT",
-                    "message": "This resource already exists.",
-                    "code": "CONFLICT",
-                },
-            }
-        }
-    )
-
-
-# ---- 422 Validation Error ----
-class ValidationErrorResponse(BaseModel):
-    """Returned when request body fails Pydantic schema validation."""
-    success: bool = Field(default=False, description="Always false for error responses")
-    error: ErrorBody = Field(..., description="Error details with per-field validation errors")
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "success": False,
-                "error": {
-                    "status_code": 422,
-                    "status_message": "UNPROCESSABLE ENTITY",
-                    "message": "Please check your input and try again.",
-                    "code": "VALIDATION_ERROR",
-                    "details": [
-                        {
-                            "field": "body.email",
-                            "message": "value is not a valid email address",
-                            "type": "value_error.email",
-                        }
-                    ],
-                },
-            }
-        }
-    )
-
-
-# ---- 429 Too Many Requests ----
-class RateLimitResponse(BaseModel):
-    """Returned when the client exceeds the rate limit for an endpoint."""
-    success: bool = Field(default=False, description="Always false for error responses")
-    error: ErrorBody = Field(..., description="Error details")
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "success": False,
-                "error": {
-                    "status_code": 429,
-                    "status_message": "TOO MANY REQUESTS",
-                    "message": "Rate limit exceeded. Please try again later.",
-                    "code": "RATE_LIMITED",
-                },
-            }
-        }
-    )
-
-
-# ---- 500 Internal Server Error ----
-class InternalServerErrorResponse(BaseModel):
-    """Returned when an unexpected server error occurs."""
-    success: bool = Field(default=False, description="Always false for error responses")
-    error: ErrorBody = Field(..., description="Error details")
-
-    model_config = ConfigDict(
-        json_schema_extra={
-            "example": {
-                "success": False,
-                "error": {
-                    "status_code": 500,
-                    "status_message": "INTERNAL SERVER ERROR",
-                    "message": "Something went wrong. Please try again later.",
-                    "code": "INTERNAL_ERROR",
-                },
-            }
-        }
-    )
-
-
-# ==================== COMMON SWAGGER RESPONSES ====================
-
-
-COMMON_ERROR_RESPONSES = {
-    401: {
-        "model": UnauthorizedResponse,
-        "description": "Authentication required or token invalid/expired",
-    },
-    422: {
-        "model": ValidationErrorResponse,
-        "description": "Request body failed schema validation",
-    },
-    429: {
-        "model": RateLimitResponse,
-        "description": "Rate limit exceeded for this endpoint",
-    },
-    500: {
-        "model": InternalServerErrorResponse,
-        "description": "Unexpected server error",
-    },
-}
+from schema.response import BaseResponse
 
 
 # ==================== AUTH REQUEST SCHEMAS ====================
@@ -387,6 +138,269 @@ class MeResponse(BaseResponse):
                     "name": "John Doe",
                     "email": "john@example.com",
                     "created_at": "2025-01-15T10:30:00",
+                },
+            }
+        }
+    )
+
+
+# ==================== KLING AI ENUMS ====================
+
+
+class KlingVideoModel(str, Enum):
+    """Available Kling AI video generation models."""
+    V2_6_PRO = "kling-v2-6"
+    V2_5_TURBO = "kling-v2-5-turbo"
+    V1_6 = "kling-v1-6"
+    V1_5 = "kling-v1-5"
+    V1 = "kling-v1"
+
+
+class KlingVideoMode(str, Enum):
+    """Video generation quality mode."""
+    STD = "std"
+    PRO = "pro"
+
+
+class KlingVideoDuration(str, Enum):
+    """Video duration in seconds."""
+    FIVE = "5"
+    TEN = "10"
+
+
+class KlingAspectRatio(str, Enum):
+    """Video aspect ratio."""
+    LANDSCAPE = "16:9"
+    PORTRAIT = "9:16"
+    SQUARE = "1:1"
+
+
+class KlingTaskStatus(str, Enum):
+    """Kling AI task status values."""
+    SUBMITTED = "submitted"
+    PROCESSING = "processing"
+    SUCCEED = "succeed"
+    FAILED = "failed"
+
+
+# ==================== KLING AI REQUEST SCHEMAS ====================
+
+
+class TextToVideoRequest(BaseModel):
+    """Request body for Kling AI text-to-video generation."""
+    prompt: str = Field(
+        ...,
+        min_length=1,
+        max_length=2500,
+        description="Text description of the video to generate",
+        examples=["A cat playing piano in a jazz club, cinematic lighting"],
+    )
+    model_name: KlingVideoModel = Field(
+        default=KlingVideoModel.V2_6_PRO,
+        description="Model version to use. Values: `kling-v2-6`, `kling-v2-5-turbo`, `kling-v1-6`, `kling-v1-5`, `kling-v1`",
+    )
+    negative_prompt: Optional[str] = Field(
+        default=None,
+        max_length=2500,
+        description="Things to avoid in the generated video",
+        examples=["blurry, low quality, distorted"],
+    )
+    cfg_scale: Optional[float] = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Guidance scale (0-1). Higher = more faithful to prompt",
+        examples=[0.5],
+    )
+    mode: KlingVideoMode = Field(
+        default=KlingVideoMode.STD,
+        description="Generation quality. Values: `std` (standard, faster), `pro` (higher quality, slower)",
+    )
+    duration: KlingVideoDuration = Field(
+        default=KlingVideoDuration.FIVE,
+        description="Video length in seconds. Values: `5`, `10`",
+    )
+    aspect_ratio: KlingAspectRatio = Field(
+        default=KlingAspectRatio.LANDSCAPE,
+        description="Video aspect ratio. Values: `16:9`, `9:16`, `1:1`",
+    )
+
+
+# ==================== KLING AI RESPONSE DATA MODELS ====================
+
+
+class KlingTokenData(BaseModel):
+    """Kling AI JWT token data."""
+    token: str = Field(
+        ...,
+        description="Generated JWT token for Kling AI API authentication",
+        examples=["eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."],
+    )
+    expires_in: int = Field(
+        ...,
+        description="Token expiration time in seconds",
+        examples=[1800],
+    )
+
+
+# ==================== KLING AI RESPONSE SCHEMAS ====================
+
+
+class KlingTokenResponse(BaseResponse):
+    """Response returned after generating a Kling AI JWT token."""
+    data: KlingTokenData = Field(..., description="Generated token data")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "success": True,
+                "message": "Kling AI token generated successfully",
+                "data": {
+                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "expires_in": 1800,
+                },
+            }
+        }
+    )
+
+
+class KlingVerifyData(BaseModel):
+    """Kling AI token verification result."""
+    valid: bool = Field(
+        ...,
+        description="Whether the token is valid and accepted by Kling AI API",
+        examples=[True],
+    )
+    iss: str = Field(
+        ...,
+        description="Issuer (access key) from the token",
+        examples=["your_access_key"],
+    )
+    exp: int = Field(
+        ...,
+        description="Token expiration timestamp (Unix epoch)",
+        examples=[1735700000],
+    )
+
+
+class KlingVerifyResponse(BaseResponse):
+    """Response returned after verifying a Kling AI JWT token."""
+    data: KlingVerifyData = Field(..., description="Token verification result")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "success": True,
+                "message": "Token is valid",
+                "data": {
+                    "valid": True,
+                    "iss": "your_access_key",
+                    "exp": 1735700000,
+                },
+            }
+        }
+    )
+
+
+# ==================== KLING AI VIDEO RESPONSE DATA MODELS ====================
+
+
+class KlingVideoWorkData(BaseModel):
+    """Individual video work item from Kling AI."""
+    id: str = Field(
+        ...,
+        description="Unique ID of the generated video work",
+        examples=["work_abc123"],
+    )
+    url: str = Field(
+        ...,
+        description="Download URL of the generated video",
+        examples=["https://cdn.klingai.com/videos/abc123.mp4"],
+    )
+    cover_url: Optional[str] = Field(
+        None,
+        description="Thumbnail/cover image URL",
+        examples=["https://cdn.klingai.com/covers/abc123.jpg"],
+    )
+
+
+class KlingTaskData(BaseModel):
+    """Kling AI video generation task data."""
+    task_id: str = Field(
+        ...,
+        description="Unique task ID for tracking video generation",
+        examples=["task_abc123def456"],
+    )
+    task_status: str = Field(
+        ...,
+        description="Current task status. Values: `submitted`, `processing`, `succeed`, `failed`",
+        examples=["submitted"],
+    )
+    task_status_msg: Optional[str] = Field(
+        None,
+        description="Human-readable status message",
+        examples=["Task submitted successfully"],
+    )
+    created_at: Optional[str] = Field(
+        None,
+        description="Task creation timestamp (Unix ms)",
+        examples=["1735700000000"],
+    )
+    updated_at: Optional[str] = Field(
+        None,
+        description="Task last updated timestamp (Unix ms)",
+        examples=["1735700060000"],
+    )
+    works: Optional[List[KlingVideoWorkData]] = Field(
+        None,
+        description="List of generated video works (populated when task succeeds)",
+    )
+
+
+class KlingCreateTaskResponse(BaseResponse):
+    """Response returned after creating a video generation task."""
+    data: KlingTaskData = Field(..., description="Created task data")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "success": True,
+                "message": "Video generation task created",
+                "data": {
+                    "task_id": "task_abc123def456",
+                    "task_status": "submitted",
+                    "task_status_msg": "Task submitted successfully",
+                    "created_at": "1735700000000",
+                    "updated_at": "1735700000000",
+                    "works": None,
+                },
+            }
+        }
+    )
+
+
+class KlingTaskStatusResponse(BaseResponse):
+    """Response returned when querying a video generation task status."""
+    data: KlingTaskData = Field(..., description="Current task data with status")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "success": True,
+                "message": "Task status retrieved",
+                "data": {
+                    "task_id": "task_abc123def456",
+                    "task_status": "succeed",
+                    "task_status_msg": "Generation complete",
+                    "created_at": "1735700000000",
+                    "updated_at": "1735700120000",
+                    "works": [
+                        {
+                            "id": "work_xyz789",
+                            "url": "https://cdn.klingai.com/videos/abc123.mp4",
+                            "cover_url": "https://cdn.klingai.com/covers/abc123.jpg",
+                        }
+                    ],
                 },
             }
         }
