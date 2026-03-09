@@ -67,5 +67,7 @@ async def kling_api_request(
             json=json_data,
             params=params,
         )
-        response.raise_for_status()
+        if response.status_code >= 400:
+            logger.error(f"Kling API error {response.status_code}: {response.text}")
+            response.raise_for_status()
         return response.json()

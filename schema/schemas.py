@@ -183,6 +183,12 @@ class KlingTaskStatus(str, Enum):
     FAILED = "failed"
 
 
+class KlingSound(str, Enum):
+    """Sound generation toggle for Kling AI video."""
+    ON = "on"
+    OFF = "off"
+
+
 # ==================== KLING AI REQUEST SCHEMAS ====================
 
 
@@ -223,6 +229,10 @@ class TextToVideoRequest(BaseModel):
     aspect_ratio: KlingAspectRatio = Field(
         default=KlingAspectRatio.LANDSCAPE,
         description="Video aspect ratio. Values: `16:9`, `9:16`, `1:1`",
+    )
+    sound: KlingSound = Field(
+        default=KlingSound.ON,
+        description="Generate native audio (dialogue, ambient sound, effects) with the video. Values: `on`, `off`. Supported on kling-v2-6+",
     )
 
 
@@ -401,6 +411,91 @@ class KlingTaskStatusResponse(BaseResponse):
                             "cover_url": "https://cdn.klingai.com/covers/abc123.jpg",
                         }
                     ],
+                },
+            }
+        }
+    )
+
+
+class KlingVideoUrlData(BaseModel):
+    """Video URL data returned when the task is complete."""
+    task_id: str = Field(
+        ...,
+        description="Task ID of the video generation",
+        examples=["task_abc123def456"],
+    )
+    task_status: str = Field(
+        ...,
+        description="Current task status",
+        examples=["succeed"],
+    )
+    video_url: Optional[str] = Field(
+        None,
+        description="Download URL of the generated video (available when status is succeed)",
+        examples=["https://cdn.klingai.com/videos/abc123.mp4"],
+    )
+    cover_url: Optional[str] = Field(
+        None,
+        description="Thumbnail image URL (available when status is succeed)",
+        examples=["https://cdn.klingai.com/covers/abc123.jpg"],
+    )
+
+
+class KlingVideoUrlResponse(BaseResponse):
+    """Response with the video URL for a completed task."""
+    data: KlingVideoUrlData = Field(..., description="Video URL data")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "success": True,
+                "message": "Video is ready",
+                "data": {
+                    "task_id": "task_abc123def456",
+                    "task_status": "succeed",
+                    "video_url": "https://cdn.klingai.com/videos/abc123.mp4",
+                    "cover_url": "https://cdn.klingai.com/covers/abc123.jpg",
+                },
+            }
+        }
+    )
+
+
+# ==================== KLING AI S3 UPLOAD RESPONSE DATA MODELS ====================
+
+
+class KlingS3UploadData(BaseModel):
+    """S3 upload result data after saving Kling video to S3."""
+    task_id: str = Field(
+        ...,
+        description="Kling AI task ID of the video",
+        examples=["task_abc123def456"],
+    )
+    s3_video_url: str = Field(
+        ...,
+        description="Permanent S3 URL of the uploaded video",
+        examples=["https://kling-ai-poc.s3.ap-south-1.amazonaws.com/videos/task_abc123_a1b2c3d4.mp4"],
+    )
+    s3_cover_url: Optional[str] = Field(
+        None,
+        description="Permanent S3 URL of the cover image (if available)",
+        examples=["https://kling-ai-poc.s3.ap-south-1.amazonaws.com/covers/task_abc123_a1b2c3d4_cover.jpg"],
+    )
+
+
+class KlingS3UploadResponse(BaseResponse):
+    """Response returned after saving a Kling video to S3."""
+    data: KlingS3UploadData = Field(..., description="S3 upload result data")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "success": True,
+                "message": "Video saved to S3 successfully",
+                "data": {
+                    "task_id": "task_abc123def456",
+                    "s3_video_url": "https://kling-ai-poc.s3.ap-south-1.amazonaws.com/videos/task_abc123_a1b2c3d4.mp4",
+                    "s3_cover_url": "https://kling-ai-poc.s3.ap-south-1.amazonaws.com/covers/task_abc123_a1b2c3d4_cover.jpg",
                 },
             }
         }

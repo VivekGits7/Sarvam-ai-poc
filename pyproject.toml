@@ -17,4 +17,5 @@ dependencies = [
     "python-multipart>=0.0.18",
     "pyjwt>=2.9.0",
     "httpx>=0.28.0",
+    "aioboto3>=13.3.0",
 ]

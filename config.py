@@ -26,6 +26,12 @@ class Settings(BaseSettings):
     KLING_SECRET_KEY: str = Field(default="", description="Kling AI Secret Key")
     KLING_API_BASE_URL: str = Field(default="https://api.klingai.com", description="Kling AI API base URL")
 
+    # ==================== AWS S3 CONFIGURATION ====================
+    AWS_ACCESS_KEY_ID: str = Field(default="", description="AWS access key ID")
+    AWS_SECRET_ACCESS_KEY: str = Field(default="", description="AWS secret access key")
+    AWS_S3_BUCKET: str = Field(default="", description="S3 bucket name")
+    AWS_REGION: str = Field(default="ap-south-1", description="AWS region")
+
     # ==================== EXTERNAL SERVICES ====================
     FRONTEND_URL: str = Field(default="http://localhost:3000", description="Frontend URL")
 
